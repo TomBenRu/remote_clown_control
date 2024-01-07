@@ -8,7 +8,7 @@ import websockets
 
 async def hello():
     uri = "ws://localhost:8000/ws/notifications/ "
-    cookie = 'ws-remote-client;Klient'
+    cookie = 'ws-cookie=clown-team-token'
     async with websockets.connect(uri, extra_headers={'Cookie': cookie}) as websocket:
         name = input("What's your name? ")
         data = json.dumps({'name': name})
