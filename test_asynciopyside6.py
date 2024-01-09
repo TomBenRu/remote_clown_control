@@ -1,5 +1,8 @@
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+import json
+
+import websockets
 from AsyncioPySide6 import AsyncioPySide6
 from PySide6.QtCore import (Qt, QObject, Signal, Slot)
 from PySide6.QtWidgets import (QApplication, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget)
@@ -29,8 +32,24 @@ class MainWindow(QMainWindow):
 
     def set_text(self):
         async def async_start():
-            await asyncio.sleep(10)
-            self.text.setText("What do you get if you multiply six by nine?")
+            uri = "ws://localhost:8000/ws/notifications/ "
+            cookie = 'ws-cookie=clown-team-token'
+
+            while True:
+                try:
+                    async with websockets.connect(uri, extra_headers={'Cookie': cookie}) as websocket:
+                        while True:
+                            name = input("What's your name? ")
+                            data = json.dumps({'name': name})
+
+                            await websocket.send(data)
+                            print(f">>> {name}")
+
+                            greeting = await websocket.recv()
+                            print(f"<<< {greeting}")
+                except websockets.exceptions.ConnectionClosed:
+                    print("Connection closed. Reconnecting...")
+                    await asyncio.sleep(5)
         AsyncioPySide6.runTask(async_start())
 
 
