@@ -4,7 +4,8 @@ import time
 
 import websockets
 from PySide6.QtCore import QObject, QThread, Signal
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QPushButton, QLabel, QApplication
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QPushButton, QLabel, QApplication, QDialog,
+                               QInputDialog, QLineEdit)
 from PySide6.QtCore import Qt
 
 
@@ -13,6 +14,20 @@ class Worker(QObject):
     finished = Signal()
     progress = Signal(int)
 
+    question = Signal()
+    answer = Signal(str)
+
+    def __init__(self, parent: 'Window'):
+        super().__init__()
+        self.parent = parent
+
+        self.parent.send_message.connect(lambda m: self.set_message(m))
+
+        self.message = None
+
+    def set_message(self, message: str):
+        self.message = message
+
     async def hello(self):
         uri = "ws://localhost:8000/ws/notifications/ "
         cookie = 'ws-cookie=clown-team-token'
@@ -20,27 +35,32 @@ class Worker(QObject):
         while True:
             try:
                 async with websockets.connect(uri, extra_headers={'Cookie': cookie}) as websocket:
+                    print(f'{websocket.ping_interval=}')
+
                     while True:
-                        name = input("What's your name? ")
-                        data = json.dumps({'name': name})
+                        # name = input("What's your name? ")
+
+                        while not self.message:
+                            continue
+                        data = json.dumps({'Message': self.message})
 
                         await websocket.send(data)
-                        print(f">>> {name}")
+                        print(f">>> {self.message}")
+                        self.message = None
 
                         greeting = await websocket.recv()
                         print(f"<<< {greeting}")
+                        print(f'{websocket.pings=}')
             except websockets.exceptions.ConnectionClosed:
                 print("Connection closed. Reconnecting...")
                 await asyncio.sleep(5)
 
     def run(self):
-        """Long-running task."""
-        for i in range(10):
-            time.sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
+        asyncio.run(self.hello())
 
 class Window(QMainWindow):
+
+    send_message = Signal(str)
     def __init__(self):
         super().__init__()
 
@@ -62,12 +82,11 @@ class Window(QMainWindow):
         self.layout.addWidget(self.lb_multicount)
         self.layout.addWidget(self.bt_multicount)
 
-
     def runLongTask(self):
         # Step 2: Create a QThread object
         self.thread = QThread()
         # Step 3: Create a worker object
-        self.worker = Worker()
+        self.worker = Worker(self)
         # Step 4: Move worker to the thread
         self.worker.moveToThread(self.thread)
         # Step 5: Connect signals and slots
@@ -75,12 +94,19 @@ class Window(QMainWindow):
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(lambda o: self.report_progress(o))
+        # self.worker.progress.connect(lambda o: self.report_progress(o))
         # Step 6: Start the thread
         self.thread.start()
 
         # Final resets
         self.bt_multicount.setEnabled(False)
+        while True:
+            message, ok = QInputDialog.getText(self, 'Message-Text', 'Message')
+            if ok:
+                self.send_message.emit(message)
+            else:
+                break
+
         self.thread.finished.connect(
             lambda: self.bt_multicount.setEnabled(True)
         )
