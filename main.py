@@ -35,6 +35,8 @@ new_department_data_1_1 = {'username': 'station_2b', 'password': 's2b', 'name': 
                            'descriptive_name': 'Kinderstation', 'location_id': '3ae5d2d8-9732-4e25-9d6b-0ec0f6e2d05c'}
 new_department_data_1_2 = {'username': 'station_5a', 'password': 's5a', 'name': 'Station 5a',
                            'descriptive_name': 'Gefäßchirurgie', 'location_id': '3ae5d2d8-9732-4e25-9d6b-0ec0f6e2d05c'}
+new_department_data_2_1 = {'username': 'srh_karlsruhe', 'password': 'srh_karl', 'name': 'Station Karlsruhe',
+                           'descriptive_name': 'Orthopädie', 'location_id': 'a8265778-2a61-42a8-a523-6eb376d17178'}
 new_department_data_3_1 = {'username': 'kiki_schöm_a', 'password': 'schöm_a', 'name': 'Station A',
                            'descriptive_name': 'Kinderstation', 'location_id': '3901e884-18c2-49a3-9b9b-54fb417857dc'}
 new_department_data_3_2 = {'username': 'kiki_schöm_b', 'password': 'schöm_b', 'name': 'Station B',
@@ -76,5 +78,5 @@ def other_requests(endpoint: str, login_data: dict, new_data_1: dict, new_data_2
 
 
 # create_superuser()
-other_requests(endpoints['create_actor'], login_data_admin_institution_actors,
-               new_actor_data_3)
+other_requests(endpoints['create_department'], login_data_admin_location_2,
+               new_department_data_2_1)
